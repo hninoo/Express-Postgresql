@@ -14,5 +14,5 @@ nodemon index.js
 ## pgAdmin Download and Setup
 
 ```sh
-[pgAdmin Link](https://www.pgadmin.org/download/)
+[pgAdmin Link] (https://www.pgadmin.org/download/)
 ```
