@@ -1,0 +1,322 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.4.0/css/font-awesome.min.css">
+  <link rel="stylesheet" href="../../css/froala_editor.css">
+  <link rel="stylesheet" href="../../css/froala_style.css">
+  <link rel="stylesheet" href="../../css/plugins/link.css">
+  
+  <style>
+    body {
+      text-align: center;
+      font-family: Arial, sans-serif;
+    }
+
+    div#editor {
+      width: 81%;
+      margin: auto;
+      text-align: left;
+    }
+  </style>
+</head>
+
+<body>
+  <div id="editor">
+    <div id='edit' style="margin-top: 30px;">
+      <h1>Multi-line Text Dynamic Positioning Fix</h1>
+      <p>This example fixes the positioning issues for multi-line text selections (文章(複数行) and 文章(複数行)のコピー).</p>
+      <p>Try selecting text across multiple lines and inserting links to see the improved positioning.</p>
+      <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.</p>
+      <p>Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.</p>
+    </div>
+  </div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/1.11.0/jquery.min.js"></script>
+  <script src="../../js/froala_editor.min.js"></script>
+  <script src="../../js/plugins/link.min.js"></script>
+
+  <script>
+    $(function(){
+      $('#edit').froalaEditor({
+        linkList: [
+          { text: 'Froala', href: 'https://froala.com', target: '_blank' },
+          { text: 'Google', href: 'https://google.com', target: '_blank' },
+          { text: 'Facebook', href: 'https://facebook.com', target: '_blank' }
+        ],
+        
+        linkInsertButtons: ['linkBack', 'linkList'],
+        linkEditButtons: ['linkOpen', 'linkStyle', 'linkEdit', 'linkRemove'],
+        
+        events: {
+          'popups.show.link.insert': function () {
+            fixMultiLinePosition.call(this, 'link.insert');
+          },
+          
+          'popups.show.link.edit': function () {
+            fixMultiLinePosition.call(this, 'link.edit');
+          },
+          
+          'commands.after': function (cmd, param1) {
+            if (cmd === 'linkList') {
+              handleLinkSelection.call(this, param1);
+            }
+          }
+        }
+      });
+      
+      // Fix multi-line positioning
+      function fixMultiLinePosition(popupType) {
+        var editor = this;
+        var popup = editor.popups.get(popupType);
+        
+        setTimeout(function() {
+          try {
+            // Get selection info with multi-line support
+            var selectionInfo = getMultiLineSelectionInfo();
+            
+            // Calculate position
+            var position = calculatePositionForMultiLine(selectionInfo, popup);
+            
+            // Apply position
+            popup.css({
+              'left': position.left + 'px',
+              'top': position.top + 'px',
+              'margin-bottom': '5px',
+              'z-index': '5'
+            });
+            
+            // Set arrow
+            popup.find('.fr-arrow').css('margin-left', position.arrowMargin + 'px');
+            
+            // Handle above/below classes
+            if (position.showAbove) {
+              popup.addClass('fr-above').removeClass('fr-below');
+            } else {
+              popup.addClass('fr-below').removeClass('fr-above');
+            }
+            
+            // Dropdown for insert popup
+            if (popupType === 'link.insert') {
+              popup.find('.fr-dropdown-menu').css({
+                'left': '4px',
+                'top': '38px',
+                'margin-bottom': '5px'
+              });
+            }
+            
+            // Japanese labels
+            setJapaneseLabels(popup);
+            
+            console.log('Multi-line position applied:', {
+              type: popupType,
+              position: position,
+              selection: selectionInfo
+            });
+            
+          } catch (error) {
+            console.error('Multi-line positioning error:', error);
+            // Fallback
+            popup.css({
+              'left': '200px',
+              'top': '200px',
+              'margin-bottom': '5px',
+              'z-index': '5'
+            });
+            popup.find('.fr-arrow').css('margin-left', '-5px');
+          }
+        }, 50);
+      }
+      
+      // Get multi-line selection information
+      function getMultiLineSelectionInfo() {
+        try {
+          var selection = window.getSelection();
+          
+          if (selection && selection.rangeCount > 0) {
+            var range = selection.getRangeAt(0);
+            var rects = range.getClientRects();
+            
+            if (rects.length > 1) {
+              // Multi-line selection
+              var bestLine = findBestLineForPositioning(rects);
+              
+              return {
+                x: bestLine.left + (bestLine.width / 2),
+                y: bestLine.top,
+                height: bestLine.height,
+                width: bestLine.width,
+                isMultiLine: true,
+                lineCount: rects.length,
+                bestLine: bestLine,
+                allRects: Array.from(rects)
+              };
+            } else if (rects.length === 1) {
+              // Single line
+              var rect = rects[0];
+              return {
+                x: rect.left + (rect.width / 2),
+                y: rect.top,
+                height: rect.height,
+                width: rect.width,
+                isMultiLine: false
+              };
+            }
+          }
+          
+          // No selection fallback
+          return {
+            x: 300,
+            y: 300,
+            height: 20,
+            width: 0,
+            isMultiLine: false,
+            isFallback: true
+          };
+          
+        } catch (e) {
+          return {
+            x: 300,
+            y: 300,
+            height: 20,
+            width: 0,
+            isMultiLine: false,
+            isFallback: true
+          };
+        }
+      }
+      
+      // Find best line for popup positioning
+      function findBestLineForPositioning(rects) {
+        var bestLine = rects[0];
+        var maxWidth = bestLine.width;
+        
+        // Find the line with most content (widest)
+        for (var i = 1; i < rects.length; i++) {
+          if (rects[i].width > maxWidth) {
+            maxWidth = rects[i].width;
+            bestLine = rects[i];
+          }
+        }
+        
+        // If first line is reasonably wide, prefer it for consistency
+        if (rects[0].width >= maxWidth * 0.7) {
+          bestLine = rects[0];
+        }
+        
+        return bestLine;
+      }
+      
+      // Calculate position for multi-line scenarios
+      function calculatePositionForMultiLine(selection, popup) {
+        var popupWidth = popup.outerWidth();
+        var popupHeight = popup.outerHeight();
+        
+        // Base position
+        var left = selection.x - (popupWidth / 2);
+        var top = selection.y - popupHeight - 15;
+        
+        // Viewport constraints
+        var windowWidth = $(window).width();
+        var windowHeight = $(window).height();
+        var scrollTop = $(window).scrollTop();
+        var scrollLeft = $(window).scrollLeft();
+        
+        // Horizontal bounds
+        var minLeft = scrollLeft + 10;
+        var maxLeft = scrollLeft + windowWidth - popupWidth - 10;
+        
+        left = Math.max(minLeft, Math.min(left, maxLeft));
+        
+        // Vertical positioning with multi-line awareness
+        var showAbove = true;
+        var spaceAbove = selection.y - scrollTop;
+        var spaceBelow = scrollTop + windowHeight - (selection.y + selection.height);
+        
+        if (selection.isMultiLine) {
+          // Multi-line needs more careful positioning
+          var requiredSpace = popupHeight + 40;
+          
+          if (spaceAbove < requiredSpace) {
+            if (spaceBelow >= requiredSpace) {
+              top = selection.y + selection.height + 15;
+              showAbove = false;
+            } else {
+              // Position in best available space
+              if (spaceAbove > spaceBelow) {
+                top = Math.max(scrollTop + 10, selection.y - popupHeight - 10);
+                showAbove = true;
+              } else {
+                top = Math.min(scrollTop + windowHeight - popupHeight - 10, selection.y + selection.height + 10);
+                showAbove = false;
+              }
+            }
+          }
+        } else {
+          // Single line positioning
+          if (spaceAbove < popupHeight + 20) {
+            top = selection.y + selection.height + 15;
+            showAbove = false;
+          }
+        }
+        
+        // Arrow calculation
+        var arrowMargin = selection.x - left - (popupWidth / 2);
+        
+        // Constrain arrow within popup
+        var arrowPadding = 20;
+        var maxArrow = (popupWidth / 2) - arrowPadding;
+        var minArrow = -(popupWidth / 2) + arrowPadding;
+        
+        arrowMargin = Math.max(minArrow, Math.min(arrowMargin, maxArrow));
+        
+        return {
+          left: Math.round(left),
+          top: Math.round(top),
+          arrowMargin: Math.round(arrowMargin),
+          showAbove: showAbove
+        };
+      }
+      
+      // Set Japanese labels
+      function setJapaneseLabels(popup) {
+        popup.find('input[name="text"]').attr('placeholder', 'テキスト');
+        popup.find('label[for*="text"]').text('テキスト');
+        popup.find('label[for*="target"]').text('新しいタブで開く');
+        popup.find('.fr-submit').text('更新');
+        
+        // Button titles
+        popup.find('[data-cmd="linkOpen"]').attr('title', 'リンクを開く');
+        popup.find('[data-cmd="linkStyle"]').attr('title', 'スタイル');
+        popup.find('[data-cmd="linkEdit"]').attr('title', 'リンクの編集');
+        popup.find('[data-cmd="linkRemove"]').attr('title', 'リンクの削除');
+        popup.find('[data-cmd="linkBack"]').attr('title', '戻る');
+        popup.find('[data-cmd="linkList"]').attr('title', 'リンクを選択');
+      }
+      
+      // Handle link selection
+      function handleLinkSelection(param1) {
+        var popup = this.popups.get('link.insert');
+        var linkData = this.opts.linkList[param1];
+        
+        if (linkData && popup) {
+          popup.find('input[name="href"]').val(linkData.href).addClass('fr-not-empty').removeAttr('disabled');
+          popup.find('input[name="text"]').val(linkData.text).addClass('fr-not-empty').removeAttr('disabled');
+          
+          if (linkData.target === '_blank') {
+            popup.find('input[name="target"]').prop('checked', true).addClass('fr-not-empty').removeAttr('disabled');
+          }
+          
+          // Enable all inputs
+          popup.find('input').removeAttr('disabled');
+          
+          // Hide dropdown
+          popup.find('.fr-dropdown-menu').attr('aria-hidden', 'true');
+          popup.find('.fr-dropdown').removeClass('fr-active').attr('aria-expanded', 'false');
+        }
+      }
+    });
+  </script>
+</body>
+</html>
