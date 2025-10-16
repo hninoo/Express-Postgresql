@@ -9,7 +9,10 @@
     <% for(let item of listItems){%>
       <div class="item">
         <form action="/delete" method="post">
-          <input type="checkbox" onchange="this.form.submit()" name="deleteItemId" value="<%= item.id %>">
+          <div class="fr-tooltip">
+            <input type="checkbox" onchange="this.form.submit()" name="deleteItemId" value="<%= item.id %>">
+            <span class="fr-tooltip-text">Click to delete this item</span>
+          </div>
         </form>
 
         <p id="title<%=item.id%>">
@@ -23,14 +26,20 @@
           <button id="done<%=item.id%>" class="edit" type="submit" hidden><img class="icon"
               src="/assets/icons/check-solid.svg" alt="tick image"></button>
         </form>
-        <button id="edit<%=item.id%>" class="edit" onclick="handler('<%=item.id%>')"><img class="icon"
-            src="/assets/icons/pencil-solid.svg" alt="pencil image"></button>
+        <div class="fr-tooltip fr-tooltip-left">
+          <button id="edit<%=item.id%>" class="edit" onclick="handler('<%=item.id%>')"><img class="icon"
+              src="/assets/icons/pencil-solid.svg" alt="pencil image"></button>
+          <span class="fr-tooltip-text">Click to edit this item</span>
+        </div>
       </div>
       <% } %>
 
         <form class="item" action="/add" method="post">
           <input type="text" name="newItem" placeholder="New Item" autocomplete="off" autofocus="true" />
-          <button class="add" type="submit" name="list" value=<%=listTitle %> >+</button>
+          <div class="fr-tooltip fr-tooltip-bottom">
+            <button class="add" type="submit" name="list" value=<%=listTitle %> >+</button>
+            <span class="fr-tooltip-text">Add new item to your list</span>
+          </div>
         </form>
   </div>
 

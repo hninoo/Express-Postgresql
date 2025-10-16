@@ -111,3 +111,92 @@ footer {
   color: white;
   text-align: center;
 }
+
+/* Tooltip Styles */
+.fr-tooltip {
+  position: relative;
+  display: inline-block;
+  cursor: help;
+}
+
+.fr-tooltip .fr-tooltip-text {
+  visibility: hidden;
+  width: 200px;
+  background-color: #333;
+  color: #fff;
+  text-align: center;
+  border-radius: 6px;
+  padding: 8px 12px;
+  font-size: 14px;
+  line-height: 1.4;
+  
+  /* Position the tooltip */
+  position: absolute;
+  z-index: 1000;
+  bottom: 125%;
+  left: 50%;
+  margin-left: -100px;
+  
+  /* Fade in tooltip */
+  opacity: 0;
+  transition: opacity 0.3s, visibility 0.3s;
+}
+
+.fr-tooltip .fr-tooltip-text::after {
+  content: "";
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  margin-left: -5px;
+  border-width: 5px;
+  border-style: solid;
+  border-color: #333 transparent transparent transparent;
+}
+
+.fr-tooltip:hover .fr-tooltip-text {
+  visibility: visible;
+  opacity: 1;
+}
+
+/* Tooltip variants */
+.fr-tooltip.fr-tooltip-right .fr-tooltip-text {
+  top: -5px;
+  left: 125%;
+  margin-left: 0;
+  bottom: auto;
+}
+
+.fr-tooltip.fr-tooltip-right .fr-tooltip-text::after {
+  top: 50%;
+  left: 0;
+  margin-left: -5px;
+  margin-top: -5px;
+  border-color: transparent #333 transparent transparent;
+}
+
+.fr-tooltip.fr-tooltip-bottom .fr-tooltip-text {
+  top: 125%;
+  bottom: auto;
+}
+
+.fr-tooltip.fr-tooltip-bottom .fr-tooltip-text::after {
+  bottom: 100%;
+  top: auto;
+  border-color: transparent transparent #333 transparent;
+}
+
+.fr-tooltip.fr-tooltip-left .fr-tooltip-text {
+  top: -5px;
+  right: 125%;
+  left: auto;
+  bottom: auto;
+}
+
+.fr-tooltip.fr-tooltip-left .fr-tooltip-text::after {
+  top: 50%;
+  right: 0;
+  left: auto;
+  margin-left: 0;
+  margin-top: -5px;
+  border-color: transparent transparent transparent #333;
+}
