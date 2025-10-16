@@ -200,3 +200,75 @@ footer {
   margin-top: -5px;
   border-color: transparent transparent transparent #333;
 }
+
+/* Text Content and Link Controls */
+.text-content {
+  flex: 1;
+  margin: 0;
+  padding: 20px 0;
+}
+
+.text-block {
+  margin: 0 0 10px 0;
+  padding: 5px 0;
+  font-size: 20px;
+  color: #00204a;
+  min-height: 30px;
+  border: 1px solid transparent;
+  border-radius: 3px;
+  transition: border-color 0.2s;
+}
+
+.text-block:hover {
+  border-color: #e0e0e0;
+}
+
+.text-block.editing {
+  border-color: #a683e3;
+  background-color: #f9f9f9;
+}
+
+.link-controls {
+  display: flex;
+  gap: 5px;
+  margin-top: 5px;
+  opacity: 0;
+  transition: opacity 0.2s;
+}
+
+.text-content:hover .link-controls {
+  opacity: 1;
+}
+
+.link-btn {
+  background: #a683e3;
+  border: none;
+  border-radius: 3px;
+  color: white;
+  padding: 4px 8px;
+  font-size: 12px;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.link-btn:hover {
+  background: #8a6bb1;
+}
+
+.link-btn.fa-plus {
+  background: #28a745;
+}
+
+.link-btn.fa-plus:hover {
+  background: #218838;
+}
+
+.inserted-link {
+  color: #007bff;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.inserted-link:hover {
+  color: #0056b3;
+}

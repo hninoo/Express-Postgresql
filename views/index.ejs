@@ -16,15 +16,15 @@
         </form>
 
         <div id="title<%=item.id%>" class="text-content">
-          <p class="text-block" data-block-id="<%=item.id%>-1">
+          <p class="text-block" data-block-id="<%=item.id%>-1" contenteditable="true">
             <%= item.title %>
           </p>
           <div class="link-controls">
-            <button type="button" class="link-btn fa-plus" onclick="addTextBlock('<%=item.id%>')" title="Add text block">
-              <span>+</span>
-            </button>
             <button type="button" class="link-btn" onclick="insertLink('<%=item.id%>-1')" title="Insert link">
               🔗
+            </button>
+            <button type="button" class="link-btn fa-plus" onclick="addTextBlock('<%=item.id%>')" title="Add text block">
+              <span>+</span>
             </button>
           </div>
         </div>
@@ -60,5 +60,138 @@
       document.getElementById("done" + id).removeAttribute("hidden")
       document.getElementById("input" + id).removeAttribute("hidden")
     }
+
+    // Track text blocks and their states
+    let textBlockCounter = {};
+    let textBlockStates = {};
+
+    function initializeTextBlock(itemId) {
+      if (!textBlockCounter[itemId]) {
+        textBlockCounter[itemId] = 1;
+        textBlockStates[itemId] = {};
+      }
+    }
+
+    function addTextBlock(itemId) {
+      initializeTextBlock(itemId);
+      
+      const textContent = document.getElementById('title' + itemId);
+      const newBlockId = itemId + '-' + (++textBlockCounter[itemId]);
+      
+      // Create new text block
+      const newBlock = document.createElement('p');
+      newBlock.className = 'text-block';
+      newBlock.setAttribute('data-block-id', newBlockId);
+      newBlock.textContent = '文章(複数行)' + textBlockCounter[itemId];
+      newBlock.contentEditable = true;
+      
+      // Create link control for this new block
+      const linkControl = document.createElement('button');
+      linkControl.type = 'button';
+      linkControl.className = 'link-btn';
+      linkControl.innerHTML = '🔗';
+      linkControl.title = 'Insert link';
+      linkControl.onclick = () => insertLink(newBlockId);
+      
+      // Insert before link-controls
+      const linkControls = textContent.querySelector('.link-controls');
+      textContent.insertBefore(newBlock, linkControls);
+      
+      // Add link button to controls
+      const addButton = linkControls.querySelector('.fa-plus');
+      linkControls.insertBefore(linkControl, addButton);
+      
+      // Initialize state for new block
+      textBlockStates[itemId][newBlockId] = {
+        hasLink: false,
+        originalText: newBlock.textContent
+      };
+      
+      console.log('Added text block:', newBlockId);
+      console.log('Current state:', textBlockStates[itemId]);
+    }
+
+    function insertLink(blockId) {
+      const [itemId, blockNum] = blockId.split('-');
+      initializeTextBlock(itemId);
+      
+      const textBlock = document.querySelector(`[data-block-id="${blockId}"]`);
+      if (!textBlock) {
+        console.error('Text block not found:', blockId);
+        return;
+      }
+      
+      // Check if this block already has a link
+      const currentState = textBlockStates[itemId][blockId];
+      if (currentState && currentState.hasLink) {
+        alert('This text block already has a link!');
+        return;
+      }
+      
+      // Get link URL from user
+      const linkUrl = prompt('Enter link URL:');
+      if (!linkUrl) return;
+      
+      const linkText = prompt('Enter link text:', 'Click here');
+      if (!linkText) return;
+      
+      // Create link element
+      const link = document.createElement('a');
+      link.href = linkUrl;
+      link.textContent = linkText;
+      link.className = 'inserted-link';
+      link.target = '_blank';
+      
+      // Insert link into text block
+      textBlock.appendChild(document.createElement('br'));
+      textBlock.appendChild(link);
+      
+      // Update state
+      if (!textBlockStates[itemId][blockId]) {
+        textBlockStates[itemId][blockId] = {
+          originalText: textBlock.textContent
+        };
+      }
+      textBlockStates[itemId][blockId].hasLink = true;
+      
+      console.log('Inserted link in block:', blockId);
+      console.log('Updated state:', textBlockStates[itemId]);
+      
+      // This fixes the issue: properly update the state tracking
+      // so that subsequent fa-plus clicks work correctly
+      updateBlockStates(itemId);
+    }
+    
+    function updateBlockStates(itemId) {
+      // Refresh the state of all blocks for this item
+      const textContent = document.getElementById('title' + itemId);
+      const allBlocks = textContent.querySelectorAll('.text-block');
+      
+      if (!textBlockStates[itemId]) {
+        textBlockStates[itemId] = {};
+      }
+      
+      allBlocks.forEach(block => {
+        const blockId = block.getAttribute('data-block-id');
+        const hasLink = block.querySelector('.inserted-link') !== null;
+        
+        textBlockStates[itemId][blockId] = {
+          hasLink: hasLink,
+          originalText: block.textContent
+        };
+      });
+      
+      console.log('Updated all block states for item:', itemId, textBlockStates[itemId]);
+    }
+
+    // Initialize existing blocks on page load
+    document.addEventListener('DOMContentLoaded', function() {
+      const allTextContents = document.querySelectorAll('.text-content');
+      allTextContents.forEach(content => {
+        const itemId = content.id.replace('title', '');
+        initializeTextBlock(itemId);
+        updateBlockStates(itemId);
+      });
+    });
   </script>
   <%- include('partials/footer.ejs'); -%>
