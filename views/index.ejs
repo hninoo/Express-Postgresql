@@ -15,9 +15,19 @@
           </div>
         </form>
 
-        <p id="title<%=item.id%>">
-          <%= item.title %>
-        </p>
+        <div id="title<%=item.id%>" class="text-content">
+          <p class="text-block" data-block-id="<%=item.id%>-1">
+            <%= item.title %>
+          </p>
+          <div class="link-controls">
+            <button type="button" class="link-btn fa-plus" onclick="addTextBlock('<%=item.id%>')" title="Add text block">
+              <span>+</span>
+            </button>
+            <button type="button" class="link-btn" onclick="insertLink('<%=item.id%>-1')" title="Insert link">
+              🔗
+            </button>
+          </div>
+        </div>
 
         <form class="edit" action="/edit" method="post">
           <input type="hidden" name="updatedItemId" value="<%= item.id %>">
